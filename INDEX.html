@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Diario Vendite — Pak Zone</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:#f0f2f5;color:#2d3748;font-size:13px;min-height:100vh}
+button{cursor:pointer;font-family:'Nunito',sans-serif;border:none;outline:none}
+input,select{font-family:'Nunito',sans-serif;outline:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:2px}
+
+/* ── TOPBAR ─────────────────────────────────── */
+.topbar{background:linear-gradient(135deg,#00a878,#00c896);padding:0 16px;height:54px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,168,120,.35);position:sticky;top:0;z-index:100}
+.logo-area{display:flex;align-items:center;gap:8px;margin-right:12px}
+.logo-ic{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-info{line-height:1.2}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.75);font-weight:600}
+.logo-name{font-size:15px;color:#fff;font-weight:800}
+.save-info{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;margin-right:4px}
+.top-divider{width:1px;height:28px;background:rgba(255,255,255,.25);margin:0 4px}
+.tbtn{padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:5px;transition:all .15s;border:none;cursor:pointer;white-space:nowrap}
+.tbtn-blue{background:#3b82f6;color:#fff}.tbtn-blue:hover{background:#2563eb}
+.tbtn-red{background:#ef4444;color:#fff}.tbtn-red:hover{background:#dc2626}
+.tbtn-orange{background:#f97316;color:#fff}.tbtn-orange:hover{background:#ea580c}
+.tbtn-green{background:#22c55e;color:#fff}.tbtn-green:hover{background:#16a34a}
+.tbtn-purple{background:#8b5cf6;color:#fff}.tbtn-purple:hover{background:#7c3aed}
+.tbtn-outline{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.6)}.tbtn-outline:hover{background:rgba(255,255,255,.15)}
+
+/* ── LAYOUT ──────────────────────────────────── */
+.app{display:flex;gap:0;min-height:calc(100vh - 54px)}
+.sidebar{width:230px;min-width:230px;background:#fff;border-right:1px solid #e2e8f0;overflow-y:auto;padding-bottom:20px}
+.main{flex:1;padding:14px 16px;overflow-y:auto;min-width:0}
+
+/* ── CALENDAR ────────────────────────────────── */
+.cal-block{padding:10px 10px 6px}
+.cal-header-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.cal-ic{font-size:14px}
+.cal-month-sel{display:flex;align-items:center;gap:4px}
+.cal-month-sel select{border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:12px;font-weight:600;color:#2d3748;background:#f8fafc}
+.cal-month-sel input{border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:12px;font-weight:600;color:#2d3748;background:#f8fafc;width:58px}
+.cal-nav{display:flex;gap:2px}
+.cal-nav button{width:22px;height:22px;border-radius:5px;background:#f0f4f8;border:1px solid #e2e8f0;font-size:12px;color:#4a5568;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s}
+.cal-nav button:hover{background:#00c896;color:#fff;border-color:#00c896}
+.btn-oggi{background:#00c896;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s}
+.btn-oggi:hover{background:#00a878}
+.cal-days-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:3px}
+.cal-dh{text-align:center;font-size:9.5px;font-weight:700;color:#718096;padding:2px 0;text-transform:capitalize}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-d{display:flex;flex-direction:column;align-items:center;padding:3px 1px;border-radius:6px;cursor:pointer;transition:all .12s;min-height:32px;position:relative}
+.cal-d:hover{background:#f0fdf4}
+.cal-d.today{background:#00c896;color:#fff}
+.cal-d.selected{background:#00c896;color:#fff}
+.cal-d.empty{pointer-events:none}
+.cal-d-num{font-size:11px;font-weight:700;line-height:1.2}
+.cal-d-info{font-size:8px;color:#718096;font-weight:600;white-space:nowrap;overflow:hidden;max-width:28px;text-overflow:ellipsis}
+.cal-d.today .cal-d-num,.cal-d.selected .cal-d-num{color:#fff}
+.cal-d.today .cal-d-info,.cal-d.selected .cal-d-info{color:rgba(255,255,255,.85)}
+.cal-d-dot{width:5px;height:5px;border-radius:50%;margin-top:1px}
+
+/* ── TOTALE MESE ─────────────────────────────── */
+.totale-block{background:#1a1a2e;margin:8px 8px 0;border-radius:10px;padding:10px 12px}
+.totale-label{font-size:9.5px;font-weight:800;color:#00c896;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.totale-row{display:flex;align-items:center;justify-content:space-between}
+.totale-val{font-size:22px;font-weight:800;color:#fff}
+.totale-badge{background:#2d3748;color:#a0aec0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+
+/* ── CAT LIST ────────────────────────────────── */
+.cat-list-block{padding:8px 8px 4px}
+.cat-list-item{display:flex;align-items:center;gap:6px;padding:4px 2px;border-bottom:1px solid #f7fafc}
+.cat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cat-list-name{flex:1;font-size:11.5px;font-weight:600;color:#2d3748;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-list-amt{font-size:11.5px;font-weight:700;color:#2d3748;white-space:nowrap}
+.cat-bar{height:2px;border-radius:1px;margin-top:2px}
+
+/* ── DETTAGLIO GIORNI ────────────────────────── */
+.detail-block{padding:8px}
+.detail-label{font-size:9.5px;font-weight:800;color:#4a5568;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.day-chip{display:flex;flex-direction:column;align-items:center;padding:3px 2px;border-radius:5px;cursor:pointer;background:#f7fafc;border:1px solid #edf2f7;transition:all .12s}
+.day-chip:hover{border-color:#00c896}
+.day-chip.has-data{background:#f0fdf4;border-color:#86efac}
+.day-chip.today-chip{background:#00c896;border-color:#00c896}
+.day-chip-num{font-size:10px;font-weight:700;color:#4a5568;line-height:1}
+.day-chip.today-chip .day-chip-num{color:#fff}
+.day-chip-dot{width:4px;height:4px;border-radius:50%;background:#00c896;margin-top:2px;opacity:0}
+.day-chip.has-data .day-chip-dot{opacity:1}
+.day-chip-sm{font-size:8px;color:#718096;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;max-width:26px;text-overflow:ellipsis}
+
+/* ── CHART ───────────────────────────────────── */
+.chart-block{padding:8px}
+.chart-label{font-size:9.5px;font-weight:800;color:#4a5568;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.chart-wrap{height:90px;position:relative}
+
+/* ── MAIN CONTENT ────────────────────────────── */
+.day-header{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.day-selected-lbl{font-size:10px;font-weight:700;color:#00c896;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.day-selected-date{font-size:18px;font-weight:800;color:#1a202c}
+.totale-giorno{background:#00c896;color:#fff;border-radius:10px;padding:8px 14px;text-align:right}
+.tg-lbl{font-size:10px;font-weight:600;opacity:.85}
+.tg-val{font-size:18px;font-weight:800}
+
+/* ── FORM ────────────────────────────────────── */
+.form-block{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.form-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px}
+.fg label .lbl-dot{width:6px;height:6px;border-radius:50%}
+.fg input,.fg select{border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:#2d3748;background:#f8fafc;transition:border-color .15s}
+.fg input:focus,.fg select:focus{border-color:#00c896;background:#fff}
+.fg-date input{width:110px}
+.fg-amt input{width:80px}
+.fg-ora input{width:60px}
+.fg-negozio input{width:90px}
+.fg-cat select{width:100px}
+.fg-note input{flex:1;min-width:120px}
+.btn-aggiungi{background:#00c896;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;align-self:flex-end}
+.btn-aggiungi:hover{background:#00a878;transform:translateY(-1px)}
+
+/* ── DIARIO ──────────────────────────────────── */
+.diario-block{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.block-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.block-title h3{font-size:14px;font-weight:800;color:#2d3748;display:flex;align-items:center;gap:6px}
+.rows-badge{background:#edf2f7;color:#718096;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:12px}
+.empty-state{text-align:center;padding:28px 20px;color:#a0aec0}
+.empty-state .empty-ic{font-size:32px;margin-bottom:8px;opacity:.5}
+.empty-state p{font-size:12px;font-weight:600}
+
+.diario-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #edf2f7;margin-bottom:6px;transition:all .12s}
+.diario-row:hover{border-color:#00c896;background:#f0fdf4}
+.dr-cat-badge{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.dr-info{flex:1;min-width:0}
+.dr-item{font-size:12.5px;font-weight:700;color:#2d3748}
+.dr-meta{font-size:10.5px;color:#718096;font-weight:500}
+.dr-amt{font-size:14px;font-weight:800;color:#00a878;white-space:nowrap}
+.dr-delete{background:none;border:none;color:#cbd5e0;font-size:14px;cursor:pointer;padding:3px;border-radius:4px;transition:all .12s}
+.dr-delete:hover{color:#ef4444;background:#fef2f2}
+
+/* ── CATEGORIE ───────────────────────────────── */
+.cat-block{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.cat-add-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.cat-name-input{flex:1;min-width:140px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#2d3748;background:#f8fafc;transition:border-color .15s}
+.cat-name-input:focus{border-color:#00c896;background:#fff}
+.cat-color-input{width:44px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px}
+.btn-aggiungi-cat{background:#8b5cf6;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-aggiungi-cat:hover{background:#7c3aed}
+
+.cat-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+.cat-card{border-radius:10px;border:1.5px solid #e8f4f0;padding:12px 14px;background:#fff;transition:all .18s;position:relative}
+.cat-card:hover{border-color:#00c896;box-shadow:0 3px 12px rgba(0,168,120,.12);transform:translateY(-1px)}
+.cat-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cat-card-ic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff}
+.cat-card-del{background:none;border:none;color:#cbd5e0;font-size:13px;cursor:pointer;padding:3px;border-radius:4px;transition:all .12s}
+.cat-card-del:hover{color:#ef4444;background:#fef2f2}
+.cat-card-name{font-size:12.5px;font-weight:800;color:#1a202c;margin-bottom:4px}
+.cat-card-lbl{font-size:9.5px;font-weight:600;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px}
+.cat-card-amt{font-size:16px;font-weight:800;color:#1a202c}
+
+/* ── FOOTER INFO ─────────────────────────────── */
+.footer-info{padding:8px 0 0;font-size:10.5px;color:#a0aec0;text-align:center}
+
+/* ── TOAST ───────────────────────────────────── */
+#toasts{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:#2d3748;color:#e2e8f0;border-radius:9px;padding:10px 16px;font-size:12.5px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;min-width:200px;animation:tIn .22s ease;border-left:3px solid #00c896}
+.toast.err{border-left-color:#ef4444}.toast.warn{border-left-color:#f59e0b}
+@keyframes tIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+/* ── CONFIRM ─────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px 24px;width:100%;max-width:340px;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:mIn .2s ease}
+.modal h3{font-size:16px;font-weight:800;color:#1a202c;margin-bottom:8px}
+.modal p{font-size:13px;color:#718096;margin-bottom:18px;line-height:1.5}
+.modal-acts{display:flex;gap:8px;justify-content:flex-end}
+.btn-cancel{background:#f0f4f8;color:#4a5568;border:none;border-radius:7px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+.btn-confirm{background:#ef4444;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media(max-width:800px){.sidebar{width:200px;min-width:200px}}
+@media(max-width:640px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;min-width:unset;height:auto}
+  .form-row{gap:6px}
+  .topbar{flex-wrap:wrap;height:auto;padding:8px 12px;gap:6px}
+}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="mConfirm">
+  <div class="modal">
+    <h3 id="cfTitle">Conferma</h3>
+    <p id="cfMsg">Sei sicuro?</p>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="closeM()">Annulla</button>
+      <button class="btn-confirm" id="cfOk">Elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ TOPBAR ════════ -->
+<div class="topbar">
+  <div class="logo-area">
+    <div class="logo-ic">📱</div>
+    <div class="logo-info">
+      <div class="logo-sub">Diario vendite / note &nbsp;·&nbsp; <span id="saveCount">0</span> righe salvate <span id="saveIndicator" style="color:#fde68a;font-size:14px"></span></div>
+      <div class="logo-name">Pak Zone</div>
+    </div>
+  </div>
+  <div class="top-divider"></div>
+  <!-- FILE BADGE -->
+  <div id="fileBadge" onclick="showFileMenu()" title="Stato salvataggio file" style="padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;white-space:nowrap;transition:all .15s;max-width:180px;overflow:hidden;text-overflow:ellipsis">⚠️ <span style="font-weight:800">Solo browser</span> — collega!</div>
+  <div class="top-divider"></div>
+  <button class="tbtn" style="background:#0ea5e9;color:#fff" onclick="linkFile()" title="Collega file sul PC — salvataggio automatico">🔗 Collega File</button>
+  <button class="tbtn" style="background:#6366f1;color:#fff" onclick="openFileLink()" title="Apri file esistente">📂 Apri File</button>
+  <div class="top-divider"></div>
+  <button class="tbtn tbtn-blue" onclick="doBackup()">💾 Backup</button>
+  <button class="tbtn tbtn-red" onclick="printPDF('all')">🖨️ PDF Tutto</button>
+  <button class="tbtn tbtn-orange" onclick="printPDF('month')">📄 PDF Mese</button>
+  <button class="tbtn tbtn-green" onclick="exportExcel()">📊 Excel Mese</button>
+  <button class="tbtn tbtn-purple" onclick="document.getElementById('importFile').click()">📥 Importa</button>
+  <button class="tbtn tbtn-outline" onclick="confirmReset()">🔄 Reset</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)"/>
+</div>
+
+<!-- ════════ APP ════════ -->
+<div class="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <!-- Calendar -->
+    <div class="cal-block">
+      <div class="cal-header-row">
+        <span class="cal-ic">📅</span>
+        <div class="cal-month-sel">
+          <select id="calMonthSel" onchange="onCalChange()">
+            <option value="0">gennaio</option><option value="1">febbraio</option>
+            <option value="2">marzo</option><option value="3">aprile</option>
+            <option value="4">maggio</option><option value="5">giugno</option>
+            <option value="6">luglio</option><option value="7">agosto</option>
+            <option value="8">settembre</option><option value="9">ottobre</option>
+            <option value="10">novembre</option><option value="11">dicembre</option>
+          </select>
+          <input type="number" id="calYearInp" min="2020" max="2099" onchange="onCalChange()"/>
+        </div>
+        <div class="cal-nav">
+          <button onclick="calNav(-1)">‹</button>
+          <button onclick="calNav(1)">›</button>
+        </div>
+        <button class="btn-oggi" onclick="goToday()">Oggi</button>
+      </div>
+      <div class="cal-days-hdr" id="calDaysHdr"></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- Totale Mese -->
+    <div class="totale-block">
+      <div class="totale-label">📊 TOTALE MESE</div>
+      <div class="totale-row">
+        <div class="totale-val" id="totaleMese">0,00 €</div>
+        <div class="totale-badge" id="totaleBadge"></div>
+      </div>
+    </div>
+
+    <!-- Cat list -->
+    <div class="cat-list-block" id="catListBlock"></div>
+
+    <!-- Dettaglio giorni -->
+    <div class="detail-block">
+      <div class="detail-label">📋 DETTAGLIO GIORNI</div>
+      <div class="days-grid" id="daysDetailGrid"></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-block">
+      <div class="chart-label">📈 ANDAMENTO VENDITE</div>
+      <div class="chart-wrap"><canvas id="sideChart"></canvas></div>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- Day header -->
+    <div class="day-header">
+      <div>
+        <div class="day-selected-lbl">📅 GIORNO SELEZIONATO</div>
+        <div class="day-selected-date" id="dayTitle">—</div>
+      </div>
+      <div class="totale-giorno">
+        <div class="tg-lbl">Totale giorno</div>
+        <div class="tg-val" id="totaleGiorno">0,00 €</div>
+      </div>
+    </div>
+
+    <!-- Add form -->
+    <div class="form-block">
+      <div class="form-row">
+        <div class="fg fg-date">
+          <label><span class="lbl-dot" style="background:#cbd5e0"></span>Data</label>
+          <input type="date" id="fData"/>
+        </div>
+        <div class="fg fg-amt">
+          <label><span class="lbl-dot" style="background:#22c55e"></span>Importo €</label>
+          <input type="number" id="fImporto" placeholder="es. 5" step="0.01" min="0"/>
+        </div>
+        <div class="fg fg-ora">
+          <label><span class="lbl-dot" style="background:#3b82f6"></span>Ora</label>
+          <input type="time" id="fOra"/>
+        </div>
+        <div class="fg fg-negozio">
+          <label>Negozio</label>
+          <input type="text" id="fNegozio" placeholder="Pak Zon" value="Pak Zone"/>
+        </div>
+        <div class="fg fg-cat">
+          <label>Categoria</label>
+          <select id="fCategoria"></select>
+        </div>
+        <div class="fg" style="flex:1">
+          <label>Note</label>
+          <input type="text" id="fNote" placeholder="es. vetro iPhone 13"/>
+        </div>
+        <button class="btn-aggiungi" onclick="addVendita()">➕ Aggiungi vendita</button>
+      </div>
+    </div>
+
+    <!-- Diario del giorno -->
+    <div class="diario-block">
+      <div class="block-title">
+        <h3>📋 Diario del giorno</h3>
+        <span class="rows-badge" id="diarioRowsCount">0 righe</span>
+      </div>
+      <div id="diarioContent">
+        <div class="empty-state">
+          <div class="empty-ic">📝</div>
+          <p>Nessuna vendita per questo giorno</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gestione categorie -->
+    <div class="cat-block">
+      <div class="block-title">
+        <h3>🏷️ Gestione categorie</h3>
+      </div>
+      <div class="cat-add-row">
+        <input type="text" class="cat-name-input" id="newCatName" placeholder="es. Ricariche"/>
+        <input type="color" class="cat-color-input" id="newCatColor" value="#f97316"/>
+        <button class="btn-aggiungi-cat" onclick="addCategoria()">Aggiungi</button>
+      </div>
+      <div class="cat-cards-grid" id="catCardsGrid"></div>
+    </div>
+
+    <div class="footer-info">💡 <strong>Salvataggio permanente:</strong> Clicca <strong>"🔗 Collega File"</strong> → scegli un file .json → i dati si salvano automaticamente ad ogni modifica. Cancellare la cronologia NON cancella il file!</div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+// ─── DATA ──────────────────────────────────────────────────────────────────
+let data = { categories: [], sales: [] };
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+let selDate = new Date().toISOString().split('T')[0];
+let cfmCb = null;
+let sideChartInst = null;
+
+const DAYS_IT = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const DAYS_FULL = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+
+// ─── REAL JSON DATA (pak-zone-diario-2026-03-06.json) ─────────────────────
+const SEED_JSON = {"schemaVersion":1,"storeName":"Pak Zone","categories":[{"id":"cat_vetro","name":"Vetro","color":"#0ea5e9"},{"id":"cat_cover","name":"Cover","color":"#a855f7"},{"id":"cat_assistenza","name":"Assistenza","color":"#22c55e"},{"id":"cat_sim","name":"SIM","color":"#f97316"},{"id":"cat_f9e3f73f9fba4_19caf26e636","name":"cuffie","color":"#f97316"},{"id":"cat_ad78f0d8471568_19caf27fea9","name":"copie","color":"#f97316"},{"id":"cat_494de7c6c2094_19caf8c71c9","name":"TELEFONI","color":"#ff00ae"},{"id":"cat_4ad4384e291d98_19cb7d1fa21","name":"cavo","color":"#02f78d"}],"entries":[{"id":"entry_e80e6bf996a518","date":"2026-03-05","time":"07:39 PM","store":"Pak Zone","amount":15,"categoryId":"cat_sim","description":""},{"id":"entry_31052ce8794fe","date":"2026-03-05","time":"06:28 PM","store":"Pak Zone","amount":7,"categoryId":"cat_f9e3f73f9fba4_19caf26e636","description":""},{"id":"entry_1df2a51f91f05","date":"2026-03-05","time":"05:30 PM","store":"Pak Zone","amount":5,"categoryId":"cat_4ad4384e291d98_19cb7d1fa21","description":""},{"id":"entry_f2f280a765f948","date":"2026-03-05","time":"05:25 PM","store":"Pak Zone","amount":10,"categoryId":"cat_cover","description":""},{"id":"entry_9fdc171bf6049","date":"2026-03-05","time":"05:25 PM","store":"Pak Zone","amount":10,"categoryId":"cat_vetro","description":""},{"id":"entry_48c7cca91654c","date":"2026-03-05","time":"03:23 PM","store":"Pak Zone","amount":8.4,"categoryId":"cat_ad78f0d8471568_19caf27fea9","description":""},{"id":"entry_8ac49d2cc958f8","date":"2026-03-05","time":"11:57 AM","store":"Pak Zone","amount":5,"categoryId":"cat_4ad4384e291d98_19cb7d1fa21","description":""},{"id":"entry_aac4e8701ea078","date":"2026-03-05","time":"11:10 AM","store":"Pak Zone","amount":6,"categoryId":"cat_sim","description":""},{"id":"entry_5c756437d11ca","date":"2026-03-05","time":"11:10 AM","store":"Pak Zone","amount":2,"categoryId":"cat_ad78f0d8471568_19caf27fea9","description":""},{"id":"entry_e9a1c2d9b8ff","date":"2026-03-05","time":"11:10 AM","store":"Pak Zone","amount":50,"categoryId":"cat_494de7c6c2094_19caf8c71c9","description":"BRONDI"},{"id":"entry_a9f74c40649e98","date":"2026-03-05","time":"11:09 AM","store":"Pak Zone","amount":15,"categoryId":"cat_sim","description":""},{"id":"entry_92301b50d581f","date":"2026-03-04","time":"07:03 PM","store":"Pak Zone","amount":15,"categoryId":"cat_sim","description":""},{"id":"entry_3417fdd3f1fd6","date":"2026-03-04","time":"07:03 PM","store":"Pak Zone","amount":15,"categoryId":"cat_sim","description":""},{"id":"entry_f98dba3420dea8","date":"2026-03-04","time":"07:03 PM","store":"Pak Zone","amount":5,"categoryId":"cat_vetro","description":""},{"id":"entry_4d1f35a5a2e3d","date":"2026-03-04","time":"05:13 PM","store":"Pak Zone","amount":7,"categoryId":"cat_vetro","description":""},{"id":"entry_3907990c00f4d","date":"2026-03-04","time":"04:29 PM","store":"Pak Zone","amount":7,"categoryId":"cat_cover","description":""},{"id":"entry_2c6cdcd4d03078","date":"2026-03-04","time":"04:10 PM","store":"Pak Zone","amount":3,"categoryId":"cat_ad78f0d8471568_19caf27fea9","description":""},{"id":"entry_4512d958b959a8","date":"2026-03-04","time":"08:42 AM","store":"Pak Zone","amount":8,"categoryId":"cat_4ad4384e291d98_19cb7d1fa21","description":""},{"id":"entry_99f3efbbaf50e","date":"2026-03-03","time":"06:37 PM","store":"Pak Zone","amount":0.2,"categoryId":"cat_ad78f0d8471568_19caf27fea9","description":""},{"id":"entry_f2bb5c56f2c718","date":"2026-03-03","time":"06:37 PM","store":"Pak Zone","amount":2,"categoryId":"cat_ad78f0d8471568_19caf27fea9","description":""},{"id":"entry_365f5b089eb7f8","date":"2026-03-03","time":"06:35 PM","store":"Pak Zone","amount":15,"categoryId":"cat_f9e3f73f9fba4_19caf26e636","description":""},{"id":"entry_b8f5e097bbf7a8","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":15,"categoryId":"cat_f9e3f73f9fba4_19caf26e636","description":"SIPRO"},{"id":"entry_88ea2166d3df3","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":15,"categoryId":"cat_f9e3f73f9fba4_19caf26e636","description":"JELLICO"},{"id":"entry_55a6487d2b6388","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":30,"categoryId":"cat_f9e3f73f9fba4_19caf26e636","description":"apple"},{"id":"entry_33a83f5e86966","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":10,"categoryId":"cat_vetro","description":""},{"id":"entry_b517e2be4bf978","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":5,"categoryId":"cat_vetro","description":""},{"id":"entry_270933952aafb8","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":25,"categoryId":"cat_assistenza","description":"iphone 12"},{"id":"entry_1f08161702825","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":3,"categoryId":"cat_ad78f0d8471568_19caf27fea9","description":""},{"id":"entry_a7ff6ec347ecd","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":5,"categoryId":"cat_vetro","description":""},{"id":"entry_4e6a552150c3a8","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":7,"categoryId":"cat_cover","description":""},{"id":"entry_4816b0fc812e48","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":5,"categoryId":"cat_sim","description":""},{"id":"entry_2ebe0432025ef","date":"2026-03-02","time":"07:10 PM","store":"Pak Zone","amount":30,"categoryId":"cat_f9e3f73f9fba4_19caf26e636","description":"jellico"}]};
+
+// ─── STORAGE: IndexedDB + File System API ──────────────────────────────────
+// IndexedDB: NON viene cancellato con la cronologia browser
+// File System API: salva direttamente su file .json sul PC
+
+let idb = null;
+let fsFileHandle = null;
+let saveTimer = null;
+let unsavedChanges = false;
+const IDB_NAME = 'pakzone_v2';
+const IDB_STORE = 'data';
+const IDB_KEY = 'main';
+const IDB_FS_KEY = 'fshandle';
+
+function openIDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => { e.target.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = e => { idb = e.target.result; res(idb); };
+    req.onerror = () => rej(req.error);
+  });
+}
+function idbSet(key, val) {
+  return new Promise((res,rej) => {
+    const tx = idb.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put(val, key);
+    tx.oncomplete = res; tx.onerror = ()=>rej(tx.error);
+  });
+}
+function idbGet(key) {
+  return new Promise((res,rej) => {
+    const tx = idb.transaction(IDB_STORE,'readonly');
+    const req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = ()=>res(req.result); req.onerror = ()=>rej(req.error);
+  });
+}
+
+async function writeToFile(json) {
+  if (!fsFileHandle) return false;
+  try {
+    const w = await fsFileHandle.createWritable();
+    await w.write(json); await w.close(); return true;
+  } catch(e) { return false; }
+}
+
+async function save() {
+  const json = JSON.stringify(data);
+  localStorage.setItem('pz2_data', json);
+  try { await idbSet(IDB_KEY, json); } catch(e) {}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const ok = await writeToFile(json);
+    updateFileBadge(ok && !!fsFileHandle);
+    if (ok) unsavedChanges = false;
+  }, 800);
+  unsavedChanges = true;
+  updateSaveIndicator();
+}
+
+async function linkFile() {
+  if (!window.showSaveFilePicker) {
+    toast('Usa Chrome o Edge per questa funzione!','warn'); return;
+  }
+  try {
+    fsFileHandle = await window.showSaveFilePicker({
+      suggestedName: 'pak-zone-dati.json',
+      types:[{description:'JSON',accept:{'application/json':['.json']}}]
+    });
+    try { await idbSet(IDB_FS_KEY, fsFileHandle); } catch(e){}
+    await save();
+    updateFileBadge(true);
+    toast('✅ File collegato! Salvataggio automatico attivo.');
+  } catch(e) { if(e.name!=='AbortError') toast('Errore: '+e.message,'err'); }
+}
+
+async function openFileLink() {
+  if (!window.showOpenFilePicker) { toast('Usa Chrome o Edge','warn'); return; }
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types:[{description:'JSON',accept:{'application/json':['.json']}}]
+    });
+    fsFileHandle = handle;
+    try { await idbSet(IDB_FS_KEY, handle); } catch(e){}
+    const file = await handle.getFile();
+    const text = await file.text();
+    const d = JSON.parse(text);
+    if (d.schemaVersion===1||d.entries) { data = convertFromSchema(d); }
+    else if (d.categories&&d.sales) { data = d; }
+    else throw new Error('Formato non valido');
+    if (data.sales.length) {
+      const latest = data.sales.map(s=>s.date).sort().reverse()[0];
+      const p=latest.split('-');
+      viewYear=parseInt(p[0]); viewMonth=parseInt(p[1])-1; selDate=latest;
+    }
+    await save(); renderAll();
+    updateFileBadge(true);
+    toast('✅ '+data.sales.length+' vendite caricate dal file!');
+  } catch(e) { if(e.name!=='AbortError') toast('Errore: '+e.message,'err'); }
+}
+
+async function restoreFileHandle() {
+  try {
+    const handle = await idbGet(IDB_FS_KEY);
+    if (!handle) return false;
+    const perm = await handle.queryPermission({mode:'readwrite'});
+    if (perm==='granted') { fsFileHandle=handle; return true; }
+    const req = await handle.requestPermission({mode:'readwrite'});
+    if (req==='granted') { fsFileHandle=handle; return true; }
+  } catch(e) {}
+  return false;
+}
+
+function updateFileBadge(linked) {
+  const el = document.getElementById('fileBadge');
+  if (!el) return;
+  if (linked && fsFileHandle) {
+    el.innerHTML = '🟢 ' + (fsFileHandle.name||'file.json');
+    el.title = 'Dati salvati automaticamente su: '+(fsFileHandle.name||'file');
+    el.style.cssText = 'background:rgba(34,197,94,.15);color:#166534;border-color:rgba(34,197,94,.4)';
+  } else {
+    el.innerHTML = '⚠️ <span style="font-weight:800">Solo browser</span> — collega un file!';
+    el.title = 'I dati sono in memoria browser e potrebbero essere cancellati';
+    el.style.cssText = 'background:rgba(251,191,36,.15);color:#92400e;border-color:rgba(251,191,36,.4)';
+  }
+}
+
+function updateSaveIndicator() {
+  const el = document.getElementById('saveIndicator');
+  if (el) el.textContent = unsavedChanges ? '●' : '';
+}
+
+// Convert schemaV1 (entries/categoryId) → internal format (sales/categoria)
+function convertFromSchema(d) {
+  const cats = (d.categories||[]).map(c => ({ id: c.id, name: c.name, color: c.color }));
+  const sales = (d.entries||[]).map((e,i) => ({
+    id: e.id || ('s_auto_'+i),
+    date: e.date,
+    ora: e.time || '',
+    importo: parseFloat(e.amount)||0,
+    categoria: e.categoryId,
+    negozio: e.store || 'Pak Zone',
+    note: e.description || ''
+  }));
+  return { categories: cats, sales };
+}
+
+async function load() {
+  await openIDB();
+  // 1. Prima prova IndexedDB (non si cancella con la cronologia!)
+  try {
+    const raw = await idbGet(IDB_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.entries) data = convertFromSchema(parsed);
+      else if (parsed.categories && parsed.sales) data = parsed;
+      if (data.sales && data.sales.length > 0) {
+        await restoreFileHandle();
+        return;
+      }
+    }
+  } catch(e) {}
+  // 2. Prova localStorage come fallback
+  try {
+    const raw = localStorage.getItem('pz2_data');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.entries) data = convertFromSchema(parsed);
+      else if (parsed.categories && parsed.sales) data = parsed;
+      if (data.sales && data.sales.length > 0) {
+        await restoreFileHandle();
+        return;
+      }
+    }
+  } catch(e) {}
+  // 3. Prima volta: carica il JSON reale
+  data = convertFromSchema(SEED_JSON);
+  viewYear = 2026; viewMonth = 2; selDate = '2026-03-05';
+  await save();
+}
+
+
+// ─── HELPERS ─────────────────────────────────────────────
+function newId(prefix) { return (prefix||'entry') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function fmtEur(v) { return parseFloat(v||0).toFixed(2).replace('.',',') + ' €'; }
+function getCat(id) { return data.categories.find(c=>c.id==id)||{name:'—',color:'#a0aec0',id:''}; }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function firstLetter(s) { return (s||'?').charAt(0).toUpperCase(); }
+
+// ─── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.createElement('div');
+  el.className = `toast${type==='err'?' err':type==='warn'?' warn':''}`;
+  el.innerHTML = `<span>${type==='err'?'❌':type==='warn'?'⚠️':'✅'}</span>${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(), 2800);
+}
+
+// ─── CONFIRM ───────────────────────────────────────────────────────────────
+function confirm2(title, msg, cb) {
+  document.getElementById('cfTitle').textContent = title;
+  document.getElementById('cfMsg').textContent = msg;
+  cfmCb = cb;
+  document.getElementById('mConfirm').classList.add('on');
+}
+document.getElementById('cfOk').onclick = () => { closeM(); if(cfmCb) cfmCb(); };
+function closeM() { document.getElementById('mConfirm').classList.remove('on'); }
+document.getElementById('mConfirm').addEventListener('click', e => { if(e.target===e.currentTarget) closeM(); });
+
+// ─── CALENDAR ──────────────────────────────────────────────────────────────
+function renderCal() {
+  // Set header selects
+  document.getElementById('calMonthSel').value = viewMonth;
+  document.getElementById('calYearInp').value = viewYear;
+
+  const hdr = document.getElementById('calDaysHdr');
+  hdr.innerHTML = DAYS_IT.map(d=>`<div class="cal-dh">${d}</div>`).join('');
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+  const firstMon = firstDay === 0 ? 6 : firstDay - 1; // adjust to Mon start
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const todayS = todayStr();
+
+  // Get days with sales
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const dayTotals = {};
+  data.sales.filter(s=>s.date.startsWith(monthKey)).forEach(s=>{
+    dayTotals[s.date] = (dayTotals[s.date]||0) + s.importo;
+  });
+
+  let html = '';
+  for (let i=0; i<firstMon; i++) html += '<div class="cal-d empty"></div>';
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = ds === todayS;
+    const isSel = ds === selDate;
+    const tot = dayTotals[ds];
+    let cls = 'cal-d';
+    if (isSel) cls += ' selected';
+    else if (isToday) cls += ' today';
+    html += `<div class="${cls}" onclick="selectDay('${ds}')">
+      <span class="cal-d-num">${d}</span>
+      ${tot ? `<span class="cal-d-info">${tot.toFixed(0)}€</span>` : '<div class="cal-d-dot" style="background:transparent"></div>'}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function calNav(dir) {
+  viewMonth += dir;
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  renderCal(); renderSidebar(); renderDaysDetail();
+}
+function onCalChange() {
+  viewMonth = parseInt(document.getElementById('calMonthSel').value);
+  viewYear = parseInt(document.getElementById('calYearInp').value)||viewYear;
+  renderCal(); renderSidebar(); renderDaysDetail();
+}
+function goToday() {
+  const n = new Date();
+  viewYear = n.getFullYear(); viewMonth = n.getMonth();
+  selDate = todayStr();
+  renderCal(); renderMain();
+}
+function selectDay(ds) {
+  selDate = ds;
+  const parts = ds.split('-');
+  viewYear = parseInt(parts[0]); viewMonth = parseInt(parts[1])-1;
+  renderCal(); renderMain();
+  document.getElementById('fData').value = ds;
+}
+
+// ─── SIDEBAR ───────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const monthSales = data.sales.filter(s=>s.date.startsWith(monthKey));
+  const total = monthSales.reduce((a,s)=>a+s.importo,0);
+
+  document.getElementById('totaleMese').textContent = fmtEur(total);
+  document.getElementById('totaleBadge').textContent = monthKey.replace('-','-');
+
+  // Cat breakdown
+  const catTotals = {};
+  monthSales.forEach(s=>{ catTotals[s.categoria] = (catTotals[s.categoria]||0) + s.importo; });
+  const maxCat = Math.max(...Object.values(catTotals),1);
+
+  let catHtml = '';
+  data.categories.forEach(c=>{
+    const amt = catTotals[c.id]||0;
+    if (!amt) return;
+    catHtml += `<div>
+      <div class="cat-list-item">
+        <div class="cat-dot" style="background:${c.color}"></div>
+        <div class="cat-list-name">${esc(c.name)}</div>
+        <div class="cat-list-amt">${fmtEur(amt)}</div>
+      </div>
+      <div class="cat-bar" style="background:${c.color}33"><div style="height:2px;border-radius:1px;background:${c.color};width:${(amt/maxCat*100).toFixed(1)}%"></div></div>
+    </div>`;
+  });
+  document.getElementById('catListBlock').innerHTML = catHtml || '<div style="padding:8px 4px;font-size:11px;color:#a0aec0">Nessuna vendita questo mese</div>';
+
+  renderChart();
+}
+
+function renderChart() {
+  const daysInM = new Date(viewYear, viewMonth+1, 0).getDate();
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const perDay = Array.from({length:daysInM},(_,i)=>{
+    const ds = `${monthKey}-${String(i+1).padStart(2,'0')}`;
+    return data.sales.filter(s=>s.date===ds).reduce((a,s)=>a+s.importo,0);
+  });
+  const labels = Array.from({length:daysInM},(_,i)=>i+1);
+
+  const ctx = document.getElementById('sideChart').getContext('2d');
+  if (sideChartInst) sideChartInst.destroy();
+  sideChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        data:perDay,
+        backgroundColor: perDay.map(v=>v>0?'#00c896':'#e2e8f0'),
+        borderRadius:3,
+        barPercentage:.7
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#a0aec0',font:{size:8},maxTicksLimit:10}},
+        y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#a0aec0',font:{size:8},callback:v=>v+'€'}}
+      }
+    }
+  });
+}
+
+function renderDaysDetail() {
+  const daysInM = new Date(viewYear, viewMonth+1, 0).getDate();
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const todayS = todayStr();
+  let html = '';
+  for (let d=1; d<=daysInM; d++) {
+    const ds = `${monthKey}-${String(d).padStart(2,'0')}`;
+    const daySales = data.sales.filter(s=>s.date===ds);
+    const tot = daySales.reduce((a,s)=>a+s.importo,0);
+    const hasData = daySales.length>0;
+    const isToday = ds===todayS;
+    html += `<div class="day-chip${hasData?' has-data':''}${isToday?' today-chip':''}" onclick="selectDay('${ds}')">
+      <div class="day-chip-num">${d}</div>
+      <div class="day-chip-dot"></div>
+      ${tot?`<div class="day-chip-sm">${tot.toFixed(0)}</div>`:''}
+    </div>`;
+  }
+  document.getElementById('daysDetailGrid').innerHTML = html;
+}
+
+// ─── MAIN CONTENT ──────────────────────────────────────────────────────────
+function renderMain() {
+  if (!selDate) return;
+  const parts = selDate.split('-');
+  const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  const dayName = DAYS_FULL[dateObj.getDay()];
+  const monthName = MONTHS_IT[dateObj.getMonth()];
+  document.getElementById('dayTitle').textContent =
+    `${dayName.charAt(0).toUpperCase()+dayName.slice(1)} ${parseInt(parts[2])} ${monthName} ${parts[0]}`;
+
+  const daySales = data.sales.filter(s=>s.date===selDate).sort((a,b)=>a.id-b.id);
+  const totDay = daySales.reduce((a,s)=>a+s.importo,0);
+  document.getElementById('totaleGiorno').textContent = fmtEur(totDay);
+
+  // Diario
+  document.getElementById('diarioRowsCount').textContent = `${daySales.length} righe`;
+  const cont = document.getElementById('diarioContent');
+  if (!daySales.length) {
+    cont.innerHTML = `<div class="empty-state"><div class="empty-ic">📝</div><p>Nessuna vendita per questo giorno</p></div>`;
+    return;
+  }
+  cont.innerHTML = daySales.map(s=>{
+    const c = getCat(s.categoria);
+    return `<div class="diario-row">
+      <div class="dr-cat-badge" style="background:${c.color}">${firstLetter(c.name)}</div>
+      <div class="dr-info">
+        <div class="dr-item">${esc(s.note)||esc(c.name)}</div>
+        <div class="dr-meta">${esc(c.name)} &middot; ${esc(s.ora)||'—'} &middot; ${esc(s.negozio)}</div>
+      </div>
+      <div class="dr-amt">${fmtEur(s.importo)}</div>
+      <button class="dr-delete" data-id="${s.id}" onclick="deleteSale(this.dataset.id,'${esc(s.note||c.name)}')">🗑️</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('saveCount').textContent = data.sales.length;
+}
+
+// ─── CATEGORIE CARDS ───────────────────────────────────────────────────────
+function renderCatCards() {
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const catTotals = {};
+  data.sales.filter(s=>s.date.startsWith(monthKey)).forEach(s=>{
+    catTotals[s.categoria] = (catTotals[s.categoria]||0)+s.importo;
+  });
+
+  const sel = document.getElementById('fCategoria');
+  const curVal = sel.value;
+  sel.innerHTML = data.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  if (curVal) sel.value = curVal;
+
+  document.getElementById('catCardsGrid').innerHTML = data.categories.map(c=>`
+    <div class="cat-card">
+      <div class="cat-card-top">
+        <div class="cat-card-ic" style="background:${c.color}">${firstLetter(c.name)}</div>
+        <button class="cat-card-del" onclick="deleteCat(${c.id},'${esc(c.name)}')">🗑️</button>
+      </div>
+      <div class="cat-card-name">${esc(c.name)}</div>
+      <div class="cat-card-lbl">Totale mese</div>
+      <div class="cat-card-amt">${fmtEur(catTotals[c.id]||0)}</div>
+    </div>`).join('');
+}
+
+// ─── ADD SALE ──────────────────────────────────────────────────────────────
+function addVendita() {
+  const date = document.getElementById('fData').value;
+  const importo = parseFloat(document.getElementById('fImporto').value);
+  const ora = document.getElementById('fOra').value;
+  const negozio = document.getElementById('fNegozio').value.trim();
+  const catId = parseInt(document.getElementById('fCategoria').value)||0;
+  const note = document.getElementById('fNote').value.trim();
+
+  if (!date) { toast('Seleziona una data','err'); return; }
+  if (!importo || importo<=0) { toast('Inserisci un importo valido','err'); return; }
+
+  const sale = {id:newId('entry'),date,ora,importo,categoria:catId,negozio:negozio||'Pak Zone',note};
+  data.sales.push(sale);
+  save();
+
+  // Clear form
+  document.getElementById('fImporto').value='';
+  document.getElementById('fNote').value='';
+  document.getElementById('fOra').value='';
+
+  // Update selected date to match
+  if (date !== selDate) { selDate = date; }
+  renderAll();
+  toast(`Aggiunto: ${fmtEur(importo)} — ${note||getCat(catId).name}`);
+}
+
+function deleteSale(id, name) {
+  confirm2('🗑️ Elimina vendita', `Eliminare "${name}"?`, ()=>{
+    data.sales = data.sales.filter(s=>String(s.id)!==String(id));
+    save(); renderAll();
+    toast(`Eliminato: ${name}`, 'warn');
+  });
+}
+
+// ─── CATEGORIES ────────────────────────────────────────────────────────────
+function addCategoria() {
+  const name = document.getElementById('newCatName').value.trim();
+  const color = document.getElementById('newCatColor').value;
+  if (!name) { toast('Inserisci il nome categoria','err'); return; }
+  data.categories.push({id:newId('cat_'+name.toLowerCase().replace(/\s+/g,'_')),name,color});
+  save();
+  document.getElementById('newCatName').value='';
+  renderAll();
+  toast(`Categoria "${name}" aggiunta`);
+}
+function deleteCat(id, name) {
+  confirm2('🗑️ Elimina categoria', `Eliminare "${name}"? Le vendite associate rimarranno.`, ()=>{
+    data.categories = data.categories.filter(c=>c.id!==id);
+    save(); renderAll();
+    toast(`Categoria "${name}" eliminata`, 'warn');
+  });
+}
+
+// ─── BACKUP / IMPORT ───────────────────────────────────────────────────────
+function doBackup() {
+  // Export in schemaV1 format for compatibility
+  const exportData = {
+    schemaVersion: 1,
+    storeName: 'Pak Zone',
+    exportedAt: new Date().toISOString(),
+    categories: data.categories.map(c=>({id:c.id,name:c.name,color:c.color})),
+    entries: data.sales.map(s=>({
+      id: s.id,
+      date: s.date,
+      time: s.ora,
+      store: s.negozio,
+      amount: s.importo,
+      categoryId: s.categoria,
+      description: s.note
+    }))
+  };
+  const blob = new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pak-zone-diario-' + todayStr() + '.json';
+  a.click();
+  toast('Backup scaricato! (' + data.sales.length + ' vendite)');
+}
+function doImport(evt) {
+  const file = evt.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    confirm2('📥 Importa dati','Questo sostituirà tutti i dati attuali. Continuare?',()=>{
+      try {
+        const d = JSON.parse(e.target.result);
+        // Support schemaVersion:1 (entries+categoryId) AND internal format (sales+categoria)
+        if (d.schemaVersion===1 || d.entries) {
+          data = convertFromSchema(d);
+          // Auto-navigate to the most recent entry date
+          if (data.sales.length) {
+            const latest = data.sales.map(s=>s.date).sort().reverse()[0];
+            const p = latest.split('-');
+            viewYear=parseInt(p[0]); viewMonth=parseInt(p[1])-1; selDate=latest;
+          }
+        } else if (d.categories && d.sales) {
+          data = d;
+        } else {
+          throw new Error('Invalid format');
+        }
+        save(); renderAll();
+        toast('✅ ' + (data.sales.length) + ' vendite importate!');
+      } catch(err){ toast('File non valido: '+err.message,'err'); }
+    });
+  };
+  reader.readAsText(file);
+  evt.target.value='';
+}
+
+// ─── EXPORT CSV (Excel) ───────────────────────────────────────────────────
+function exportExcel() {
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const sales = data.sales.filter(s=>s.date.startsWith(monthKey)).sort((a,b)=>a.date.localeCompare(b.date));
+  let csv = 'Data,Ora,Importo,Categoria,Negozio,Note\n';
+  sales.forEach(s=>{
+    const c = getCat(s.categoria);
+    csv += `${s.date},${s.ora||''},${s.importo.toFixed(2)},"${c.name}","${s.negozio||''}","${s.note||''}"\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pakzone-${monthKey}.csv`;
+  a.click();
+  toast('Excel/CSV esportato!');
+}
+
+// ─── PRINT PDF ─────────────────────────────────────────────────────────────
+function printPDF(mode) {
+  const monthKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}`;
+  const sales = mode==='month'
+    ? data.sales.filter(s=>s.date.startsWith(monthKey)).sort((a,b)=>a.date.localeCompare(b.date))
+    : [...data.sales].sort((a,b)=>a.date.localeCompare(b.date));
+
+  const total = sales.reduce((a,s)=>a+s.importo,0);
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Pak Zone — Report</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:24px;color:#1a202c;font-size:12px}
+    h1{color:#00a878;margin-bottom:4px}
+    .meta{color:#718096;font-size:11px;margin-bottom:16px}
+    .total{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 16px;display:inline-block;margin-bottom:16px}
+    .total strong{font-size:18px;color:#00a878}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#1a202c;color:#fff;padding:7px 10px;text-align:left}
+    td{padding:6px 10px;border-bottom:1px solid #f0f4f8}
+    tr:nth-child(even) td{background:#f8fafc}
+    .amt{font-weight:700;color:#00a878}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h1>📱 Pak Zone — Report</h1>
+  <div class="meta">Generato il ${new Date().toLocaleString('it-IT')} &nbsp;·&nbsp; ${mode==='month'?MONTHS_IT[viewMonth]+' '+viewYear:'Tutte le vendite'}</div>
+  <div class="total">Totale: <strong>${fmtEur(total)}</strong> (${sales.length} vendite)</div>
+  <table>
+    <tr><th>Data</th><th>Ora</th><th>Importo</th><th>Categoria</th><th>Negozio</th><th>Note</th></tr>
+    ${sales.map(s=>{
+      const c=getCat(s.categoria);
+      return `<tr><td>${s.date}</td><td>${s.ora||'—'}</td><td class="amt">${fmtEur(s.importo)}</td><td>${esc(c.name)}</td><td>${esc(s.negozio)}</td><td>${esc(s.note)}</td></tr>`;
+    }).join('')}
+  </table></body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),400);
+}
+
+// ─── RESET ─────────────────────────────────────────────────────────────────
+function confirmReset() {
+  confirm2('🔄 Reset completo','Eliminare TUTTE le vendite? Le categorie rimarranno.',()=>{
+    data.sales = [];
+    save(); renderAll();
+    toast('Reset completato','warn');
+  });
+}
+
+// ─── KEYBOARD SHORTCUTS ────────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault(); undoLast();}
+  if(e.key==='Escape') closeM();
+  if(e.ctrlKey&&e.key==='s'){e.preventDefault(); doBackup();}
+});
+
+// ── Avvisa se ci sono dati non salvati su file ──
+window.addEventListener('beforeunload', e => {
+  if (unsavedChanges && !fsFileHandle) {
+    e.preventDefault();
+    e.returnValue = 'Hai dati non salvati su file! Collega un file o fai Backup prima di chiudere.';
+  }
+});
+
+function undoLast(){
+  if(!data.sales.length){toast('Niente da annullare','warn');return;}
+  const last=data.sales[data.sales.length-1];
+  data.sales.pop(); save(); renderAll();
+  toast(`↩️ Annullato: ${last.note||getCat(last.categoria).name}`,'warn');
+}
+
+function showFileMenu() {
+  if (fsFileHandle) {
+    toast('File: ' + fsFileHandle.name + ' — salvataggio attivo ✅');
+  } else {
+    toast('⚠️ Nessun file collegato! Clicca "Collega File" per salvare in modo permanente.','warn');
+  }
+}
+
+// ─── RENDER ALL ────────────────────────────────────────────────────────────
+function renderAll() {
+  renderCal();
+  renderSidebar();
+  renderDaysDetail();
+  renderMain();
+  renderCatCards();
+  document.getElementById('saveCount').textContent = data.sales.length;
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+(async function init(){
+  await load();
+  document.getElementById('fData').value = selDate;
+  const now = new Date();
+  document.getElementById('fOra').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  renderAll();
+  document.getElementById('saveCount').textContent = data.sales.length;
+  updateFileBadge(!!fsFileHandle);
+  // Mostra avviso se non c'è file collegato
+  if (!fsFileHandle) {
+    setTimeout(()=>{
+      toast('⚠️ Collega un file per salvare i dati in modo permanente (pulsante "Collega File")','warn');
+    }, 1500);
+  }
+})();
+</script>
+</body>
+</html>
